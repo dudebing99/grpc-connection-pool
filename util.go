@@ -4,6 +4,7 @@ import (
 	"context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
+	"runtime/debug"
 	"sync/atomic"
 	"time"
 )
@@ -47,6 +48,11 @@ func (pool *Pool) close(conn *grpc.ClientConn) {
 	}
 
 	go func() {
+		defer func() {
+			if err := recover(); nil != err {
+				debug.PrintStack()
+			}
+		}()
 		detect, _ := passivate(conn)
 		if detect && pool.ChannelStat {
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
